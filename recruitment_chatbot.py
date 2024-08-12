@@ -1,5 +1,4 @@
 import streamlit as st
-import plotly.graph_objects as go
 
 # Example dictionaries to simulate model and candidate behavior
 questions_and_answers = {
@@ -47,24 +46,6 @@ recommended_jobs = {
     }
 }
 
-# Function to create a circular gauge
-def plot_gauge(value):
-    fig = go.Figure()
-    fig.add_trace(go.Indicator(
-        mode="gauge+number",
-        value=value,
-        gauge={'axis': {'range': [0, 100]},
-               'bar': {'color': "cyan"},
-               'bgcolor': "white",
-               'steps': [
-                   {'range': [0, 50], 'color': "lightgray"},
-                   {'range': [50, 100], 'color': "gray"}],
-               },
-        domain={'x': [0, 1], 'y': [0, 1]}
-    ))
-    fig.update_layout(height=300, margin=dict(l=0, r=0, t=0, b=0))
-    return fig
-
 # Initialize session state
 if 'job_selected' not in st.session_state:
     st.session_state['job_selected'] = False
@@ -94,16 +75,17 @@ def simulate_chatbot_interaction(questions):
 
     # Ensure progress is between 0.0 and 1.0
     progress = min(max(question_index / num_questions, 0.0), 1.0)
-    st.progress(progress)
+    st.progress(progress, text=f"Progress: {int(progress * 100)}%")
 
     if question_index < num_questions:
         question = list(questions.keys())[question_index]
         options = questions[question]
         st.write(f"**Question {question_index + 1}:** {question}")
-        user_response = st.selectbox("Your Answer", options, key=f"response_{question_index}")
+        
+        selected_option = st.radio("Select your answer", options, key=f"response_{question_index}")
 
         if st.button("Next Question"):
-            st.session_state['user_responses'].append(user_response)
+            st.session_state['user_responses'].append(selected_option)
             st.session_state['question_index'] += 1
             st.rerun()
     else:
@@ -116,9 +98,13 @@ def evaluate_candidate(user_responses):
     # Example calculation for evaluation percentage
     evaluation_percentage = 75  # This can be dynamically calculated based on responses
 
-    # Display evaluation percentage as a circular gauge
-    fig = plot_gauge(evaluation_percentage)
-    st.plotly_chart(fig)
+    # Display evaluation percentage as a progress bar and text
+    st.markdown("<h2 style='text-align: center;'>Evaluation Score</h2>", unsafe_allow_html=True)
+    st.progress(evaluation_percentage / 100)
+    st.markdown(
+        f"<h1 style='text-align: center; color: #4CAF50;'>{evaluation_percentage}%</h1>",
+        unsafe_allow_html=True
+    )
 
     st.write("### Recommended Job Offers")
     # Display recommendations as tiles
@@ -128,7 +114,10 @@ def evaluate_candidate(user_responses):
             st.image(details["image"], use_column_width=True)
             st.write(f"**{job_title}**")
             st.write(details["description"])
-
+            if st.button(f"Select {job_title}", key=f"select_{job_title}"):
+                st.session_state['job_selected'] = True
+                st.session_state['selected_job'] = job_title
+                st.rerun()
 
 def main():
     st.title("Talent.io")
@@ -178,7 +167,7 @@ def main():
                 st.rerun()
 
     elif page == "Chatbot Interface":
-        
+        st.write("### Chatbot Interface")
         st.write("Answer the following questions one by one.")
 
         # Get job title to fetch relevant questions
