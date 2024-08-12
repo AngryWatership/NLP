@@ -56,6 +56,9 @@ if 'resume_uploaded' not in st.session_state:
 if 'chat_completed' not in st.session_state:
     st.session_state['chat_completed'] = False
 
+if 'welcome_page_visited' not in st.session_state:
+    st.session_state['welcome_page_visited'] = False
+
 if 'question_index' not in st.session_state:
     st.session_state['question_index'] = 0
 
@@ -64,7 +67,19 @@ if 'user_responses' not in st.session_state:
 
 if 'evaluation_done' not in st.session_state:
     st.session_state['evaluation_done'] = False
+def display_welcome_page():
+    st.title("Welcome to Talent.io")
+    st.write("### Welcome!")
+    st.write("Thank you for using our recruitment chatbot. Follow the steps below to get started with your job application:")
+    st.write("1. **Explore Job Offers**: Browse through the available job offers and select the one that suits you best.")
+    st.write("2. **Upload Your Resume**: Provide your resume and additional details required for the application.")
+    st.write("3. **Answer Chatbot Questions**: Respond to the chatbot's questions to evaluate your suitability for the selected job.")
+    st.write("4. **Receive Recommendations**: Get recommendations for other suitable job offers based on your evaluation.")
 
+    if st.button("Get Started"):
+        st.session_state['welcome_page_visited'] = True
+        st.rerun()
+        
 def simulate_chatbot_interaction(questions):
     question_index = st.session_state['question_index']
     num_questions = len(questions)
@@ -122,6 +137,10 @@ def evaluate_candidate(user_responses):
 def main():
     st.title("Talent.io")
     
+    if not st.session_state['welcome_page_visited']:
+        display_welcome_page()
+        return
+    
     if not st.session_state['job_selected']:
         page = "Job Offers"
     elif not st.session_state['resume_uploaded']:
@@ -167,7 +186,6 @@ def main():
                 st.rerun()
 
     elif page == "Chatbot Interface":
-        st.write("### Chatbot Interface")
         st.write("Answer the following questions one by one.")
 
         # Get job title to fetch relevant questions
